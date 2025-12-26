@@ -68,7 +68,7 @@ class MIMODetector:
         return x_hat
 
     def detect_mmse(self, y: np.ndarray, H: np.ndarray,
-                    noise_var: float) -> np.ndarray:
+                    noise_var: float, return_post_var: bool = False):
         """
         MMSE (Minimum Mean Square Error) Detection.
 
@@ -91,9 +91,11 @@ class MIMODetector:
             y: Tín hiệu nhận
             H: Ma trận kênh
             noise_var: Phương sai nhiễu (σ²)
+            return_post_var: Nếu True, trả về cả post-detection noise variance
 
         Returns:
             x_hat: Tín hiệu ước lượng
+            post_noise_var: (optional) Post-detection noise variance cho mỗi stream
         """
         n_tx = H.shape[1]
 
@@ -106,6 +108,14 @@ class MIMODetector:
             x_hat = W @ y
         else:
             x_hat = W @ y
+
+        if return_post_var:
+            # Post-detection noise variance cho mỗi stream
+            # Công thức: var_k = (W @ W^H)[k,k] * noise_var
+            # Đây là effective noise variance sau MMSE filtering
+            W_WH = W @ W.conj().T
+            post_noise_var = np.real(np.diag(W_WH)) * noise_var
+            return x_hat, post_noise_var
 
         return x_hat
 
